@@ -1,0 +1,185 @@
+.container {
+  min-height: 100vh;
+  background: #0f0f1a;
+  color: #fff;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.userInfo h2 {
+  font-size: 1.5rem;
+  color: #00f2fe;
+}
+
+.userInfo p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.logoutBtn {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 0.5rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logoutBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.main {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.statCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.statCard h3 {
+  font-size: 2.5rem;
+  color: #00f2fe;
+  margin-bottom: 0.5rem;
+}
+
+.statCard p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.pointsLink {
+  background: rgba(0, 242, 254, 0.1);
+  color: #00f2fe;
+  border: 1px solid rgba(0, 242, 254, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.pointsLink:hover {
+  background: rgba(0, 242, 254, 0.2);
+}
+
+/* Today Workout Hero */
+.todayWorkout {
+  background: linear-gradient(145deg, rgba(0, 242, 254, 0.1), rgba(15, 15, 26, 0.8));
+  border: 1px solid rgba(0, 242, 254, 0.2);
+  padding: 2.5rem;
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 30px rgba(0, 242, 254, 0.05);
+}
+
+.workoutBadge {
+  background: #00f2fe;
+  color: #0f0f1a;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  display: inline-block;
+}
+
+.workoutInfo h2 {
+  font-size: 2rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.workoutInfo p {
+  color: #a0aec0;
+}
+
+.startHeroBtn {
+  background: #00f2fe;
+  color: #0f0f1a;
+  border: none;
+  padding: 1.2rem 2.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
+}
+
+.startHeroBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 25px rgba(0, 242, 254, 0.5);
+}
+
+/* Evolution Section */
+.sectionTitle {
+  font-size: 1.3rem;
+  color: #cbd5e1;
+  margin-bottom: 1.5rem;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.chartCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.chartCard h4 {
+  color: #a0aec0;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.chartWrapper {
+  height: 250px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .todayWorkout {
+    flex-direction: column;
+    text-align: center;
+    gap: 2rem;
+  }
+  
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}

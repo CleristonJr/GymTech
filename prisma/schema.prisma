@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Gym {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   // SUPER_ADMIN, GYM_ADMIN, TRAINER, STUDENT
+  gymId     String?
+  gym       Gym?     @relation(fields: [gymId], references: [id])
+  
+  // Gamificação
+  points    Int      @default(0)
+  shortId   String?  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trainerPlans WorkoutPlan[]    @relation("TrainerPlans")
+  studentPlans WorkoutPlan[]    @relation("StudentPlans")
+  sessions     WorkoutSession[]
+  
+  // Grupos
+  ownedGroups  Group[]          @relation("GroupOwner")
+  groupMembers GroupMember[]
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  owner     User     @relation("GroupOwner", fields: [ownerId], references: [id])
+  
+  members   GroupMember[]
+  createdAt DateTime @default(now())
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  
+  group     Group    @relation(fields: [groupId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  
+  joinedAt  DateTime @default(now())
+
+  @@unique([groupId, userId])
+}
+
+model Exercise {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  gifUrl      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workoutExercises WorkoutExercise[]
+}
+
+model WorkoutPlan {
+  id        String   @id @default(cuid())
+  name      String
+  trainerId String
+  studentId String
+  trainer   User     @relation("TrainerPlans", fields: [trainerId], references: [id])
+  student   User     @relation("StudentPlans", fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  exercises WorkoutExercise[]
+  sessions  WorkoutSession[]
+}
+
+model WorkoutExercise {
+  id            String      @id @default(cuid())
+  workoutPlanId String
+  exerciseId    String
+  sets          Int
+  reps          Int
+  restTimeSecs  Int         @default(60)
+  orderIndex    Int         @default(0)
+  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id])
+  exercise      Exercise    @relation(fields: [exerciseId], references: [id])
+}
+
+model WorkoutSession {
+  id            String      @id @default(cuid())
+  workoutPlanId String
+  studentId     String
+  startedAt     DateTime    @default(now())
+  finishedAt    DateTime?
+  status        String      @default("STARTED") // STARTED, COMPLETED
+  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id])
+  student       User        @relation(fields: [studentId], references: [id])
+}
