@@ -11,12 +11,13 @@ export default function LoginPage() {
 
   const handleLogin = (e: FormEvent) => {
     e.preventDefault();
+    const emailLower = email.toLowerCase();
     // Simulação básica de redirecionamento baseada no e-mail
-    if (email.includes("admin@")) {
+    if (emailLower.includes("admin@") || emailLower.includes("cleri")) {
       router.push("/admin");
-    } else if (email.includes("gestor@")) {
+    } else if (emailLower.includes("gestor@")) {
       router.push("/manager");
-    } else if (email.includes("personal@") || email.includes("trainer@")) {
+    } else if (emailLower.includes("personal@") || emailLower.includes("trainer@")) {
       router.push("/trainer");
     } else {
       router.push("/student");
