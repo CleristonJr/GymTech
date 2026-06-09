@@ -41,6 +41,8 @@ export async function setupSuperAdmin(formData: FormData) {
   }
 }
 
+import { cookies } from "next/headers";
+
 export async function loginUser(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -53,6 +55,14 @@ export async function loginUser(formData: FormData) {
 
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) return { error: "Credenciais inválidas." };
+
+    // Define cookies de sessão simples para acesso nos Server Components
+    const cookieStore = await cookies();
+    cookieStore.set('userId', user.id, { path: '/' });
+    cookieStore.set('userRole', user.role, { path: '/' });
+    if (user.gymId) {
+      cookieStore.set('gymId', user.gymId, { path: '/' });
+    }
 
     return { 
       success: true, 

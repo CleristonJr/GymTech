@@ -29,6 +29,8 @@ model User {
   
   // Gamificação
   points    Int      @default(0)
+  streak    Int      @default(0)
+  crystals  Int      @default(3)
   shortId   String?  @unique
 
   mustChangePassword Boolean @default(false)
@@ -39,17 +41,29 @@ model User {
   trainerPlans WorkoutPlan[]    @relation("TrainerPlans")
   studentPlans WorkoutPlan[]    @relation("StudentPlans")
   sessions     WorkoutSession[]
+  measurements Measurement[]
   
   // Grupos
   ownedGroups  Group[]          @relation("GroupOwner")
   groupMembers GroupMember[]
 }
 
+model Measurement {
+  id          String   @id @default(cuid())
+  studentId   String
+  weight      Float
+  bodyFat     Float?
+  note        String?
+  createdAt   DateTime @default(now())
+  student     User     @relation(fields: [studentId], references: [id])
+}
+
 model Group {
-  id        String   @id @default(cuid())
-  name      String
-  ownerId   String
-  owner     User     @relation("GroupOwner", fields: [ownerId], references: [id])
+  id          String   @id @default(cuid())
+  name        String
+  inviteCode  String   @unique
+  ownerId     String
+  owner       User     @relation("GroupOwner", fields: [ownerId], references: [id])
   
   members   GroupMember[]
   createdAt DateTime @default(now())
