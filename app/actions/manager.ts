@@ -5,9 +5,11 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 
-// Helper para pegar o gymId do gestor logado
+// Helper para pegar o gymId do gestor logado e garantir que ele é gestor
 async function getManagerGymId() {
   const cookieStore = await cookies();
+  const role = cookieStore.get('userRole')?.value;
+  if (role !== "GYM_ADMIN") return null;
   return cookieStore.get('gymId')?.value;
 }
 

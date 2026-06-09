@@ -6,8 +6,9 @@ import ManagerClient from "./ManagerClient";
 export default async function GymManagerDashboard() {
   const cookieStore = await cookies();
   const gymId = cookieStore.get("gymId")?.value;
+  const role = cookieStore.get("userRole")?.value;
 
-  if (!gymId) {
+  if (!gymId || role !== "GYM_ADMIN") {
     redirect("/login");
   }
 
