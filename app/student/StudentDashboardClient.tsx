@@ -16,6 +16,7 @@ type StudentData = {
   streak: number;
   crystals: number;
   activePlan: { id: string, name: string } | null;
+  activeRoutine: { id: string, name: string } | null;
   measurements: MeasurementData[];
   gymName: string;
 };
@@ -32,8 +33,8 @@ export default function StudentDashboardClient({ student }: { student: StudentDa
   };
 
   const handleStartWorkout = () => {
-    if (!student.activePlan) return alert("Você ainda não possui uma ficha de treino ativa. Peça ao seu personal!");
-    router.push(`/student/workout?planId=${student.activePlan.id}`);
+    if (!student.activeRoutine) return alert("Você ainda não possui uma ficha de treino ativa. Peça ao seu personal!");
+    router.push(`/student/workout?routineId=${student.activeRoutine.id}`);
   };
 
   return (
@@ -77,11 +78,11 @@ export default function StudentDashboardClient({ student }: { student: StudentDa
         <section className={styles.todayWorkout}>
           <div className={styles.workoutInfo}>
             <span className={styles.workoutBadge}>Treino do Dia</span>
-            <h2>{student.activePlan ? student.activePlan.name : "Nenhuma ficha ativa"}</h2>
-            <p>{student.activePlan ? "Sequência recomendada pelo seu personal." : "Fale com o seu treinador para receber seu treino."}</p>
+            <h2>{student.activeRoutine ? `${student.activePlan?.name} - ${student.activeRoutine.name}` : "Nenhuma ficha ativa"}</h2>
+            <p>{student.activeRoutine ? "Sequência inteligente baseada no seu último treino concluído." : "Fale com o seu treinador para receber seu treino."}</p>
           </div>
-          <button className={styles.startHeroBtn} onClick={handleStartWorkout} style={{ opacity: student.activePlan ? 1 : 0.5 }}>
-            ▶ Iniciar Treino Agora
+          <button className={styles.startHeroBtn} onClick={handleStartWorkout} style={{ opacity: student.activeRoutine ? 1 : 0.5 }}>
+            ▶ Iniciar {student.activeRoutine?.name || "Treino"}
           </button>
         </section>
 

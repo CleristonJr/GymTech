@@ -6,6 +6,7 @@ import styles from "../admin/page.module.css";
 type StudentData = {
   id: string;
   name: string;
+  shortId: string | null;
   lastPlanName: string | null;
   lastSessionDate: Date | null;
 };
@@ -56,7 +57,10 @@ export default function TrainerClient({ students }: { students: StudentData[] })
                 <tr><td colSpan={4} style={{textAlign: 'center', padding: '2rem'}}>Nenhum aluno cadastrado nesta academia.</td></tr>
               ) : students.map(student => (
                 <tr key={student.id}>
-                  <td>{student.name}</td>
+                  <td>
+                    <strong>{student.name}</strong>
+                    <div style={{ fontSize: '0.8rem', color: '#666' }}>ID: {student.shortId || "Sem ID"}</div>
+                  </td>
                   <td>
                     {student.lastPlanName ? (
                       <span className={styles.badge}>{student.lastPlanName}</span>

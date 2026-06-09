@@ -44,7 +44,12 @@ export async function createExercise(name: string) {
   }
 }
 
-export async function createWorkoutPlan(studentId: string, planName: string, exercises: { exerciseId: string, sets: number, reps: number }[]) {
+type RoutineData = {
+  name: string;
+  exercises: { exerciseId: string, sets: number, reps: number }[];
+};
+
+export async function createWorkoutPlan(studentId: string, planName: string, routines: RoutineData[]) {
   try {
     const { userId } = await getTrainerContext();
     if (!userId) return { error: "Não autorizado." };
@@ -58,16 +63,27 @@ export async function createWorkoutPlan(studentId: string, planName: string, exe
         }
       });
 
-      for (let i = 0; i < exercises.length; i++) {
-        await tx.workoutExercise.create({
+      for (let r = 0; r < routines.length; r++) {
+        const routine = await tx.routine.create({
           data: {
             workoutPlanId: plan.id,
-            exerciseId: exercises[i].exerciseId,
-            sets: exercises[i].sets,
-            reps: exercises[i].reps,
-            orderIndex: i
+            name: routines[r].name || `Treino ${String.fromCharCode(65 + r)}`,
+            orderIndex: r
           }
         });
+
+        const exercises = routines[r].exercises;
+        for (let i = 0; i < exercises.length; i++) {
+          await tx.workoutExercise.create({
+            data: {
+              routineId: routine.id,
+              exerciseId: exercises[i].exerciseId,
+              sets: exercises[i].sets,
+              reps: exercises[i].reps,
+              orderIndex: i
+            }
+          });
+        }
       }
     });
 

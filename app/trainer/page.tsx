@@ -31,6 +31,7 @@ export default async function TrainerDashboard() {
   const formattedStudents = rawStudents.map(s => ({
     id: s.id,
     name: s.name,
+    shortId: s.shortId,
     lastPlanName: s.studentPlans.length > 0 ? s.studentPlans[0].name : null,
     lastSessionDate: s.sessions.length > 0 ? s.sessions[0].startedAt : null
   }));

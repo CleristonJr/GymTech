@@ -11,7 +11,7 @@ type ExerciseDetail = {
   reps: number;
 };
 
-export default function WorkoutClient({ planId, exercises, currentStreak, currentCrystals }: { planId: string, exercises: ExerciseDetail[], currentStreak: number, currentCrystals: number }) {
+export default function WorkoutClient({ routineId, routineName, exercises, currentStreak, currentCrystals }: { routineId: string, routineName: string, exercises: ExerciseDetail[], currentStreak: number, currentCrystals: number }) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentSet, setCurrentSet] = useState(1);
@@ -78,7 +78,7 @@ export default function WorkoutClient({ planId, exercises, currentStreak, curren
 
   const finishWorkout = async () => {
     setIsSubmitting(true);
-    const res = await finishWorkoutSession(planId);
+    const res = await finishWorkoutSession(routineId);
     if (res.error) {
       alert(res.error);
       setIsSubmitting(false);

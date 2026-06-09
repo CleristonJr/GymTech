@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
-export async function finishWorkoutSession(planId: string) {
+export async function finishWorkoutSession(routineId: string) {
   try {
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
@@ -15,7 +15,7 @@ export async function finishWorkoutSession(planId: string) {
     await prisma.workoutSession.create({
       data: {
         studentId: userId,
-        workoutPlanId: planId,
+        routineId: routineId,
         startedAt: new Date(Date.now() - 45 * 60000), // Simula que começou há 45 min
         finishedAt: new Date(),
         status: "COMPLETED"

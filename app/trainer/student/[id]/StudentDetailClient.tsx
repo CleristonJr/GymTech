@@ -22,8 +22,14 @@ type StudentProfile = {
   id: string;
   name: string;
   email: string;
+  shortId: string | null;
   measurements: MeasurementData[];
   currentPlan: string | null;
+};
+
+type RoutineDraft = {
+  name: string;
+  exercises: { exerciseId: string; sets: number; reps: number }[];
 };
 
 export default function StudentDetailClient({ student, exercises: initialExercises }: { student: StudentProfile, exercises: ExerciseData[] }) {
@@ -36,7 +42,10 @@ export default function StudentDetailClient({ student, exercises: initialExercis
   // Modal de Ficha
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [planName, setPlanName] = useState("");
-  const [planExercises, setPlanExercises] = useState<{exerciseId: string, sets: number, reps: number}[]>([]);
+  const [planRoutines, setPlanRoutines] = useState<RoutineDraft[]>([
+    { name: "Treino A", exercises: [] }
+  ]);
+  const [activeRoutineTab, setActiveRoutineTab] = useState(0);
   const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
 
   // Cadastro rápido de exercício
@@ -58,25 +67,59 @@ export default function StudentDetailClient({ student, exercises: initialExercis
     setIsSubmittingEvo(false);
   };
 
-  const addExerciseToPlan = () => {
-    setPlanExercises([...planExercises, { exerciseId: exercises[0]?.id || "", sets: 3, reps: 10 }]);
+  const addRoutine = () => {
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const nextLetter = letters[planRoutines.length % letters.length];
+    setPlanRoutines([...planRoutines, { name: `Treino ${nextLetter}`, exercises: [] }]);
+    setActiveRoutineTab(planRoutines.length);
   };
 
-  const updatePlanExercise = (index: number, field: string, value: string | number) => {
-    const updated = [...planExercises];
-    (updated[index] as any)[field] = value;
-    setPlanExercises(updated);
+  const removeRoutine = (index: number) => {
+    if (planRoutines.length <= 1) return alert("A ficha precisa ter pelo menos um treino.");
+    const updated = planRoutines.filter((_, i) => i !== index);
+    setPlanRoutines(updated);
+    setActiveRoutineTab(Math.max(0, index - 1));
+  };
+
+  const addExerciseToRoutine = (rIndex: number) => {
+    const updated = [...planRoutines];
+    updated[rIndex].exercises.push({ exerciseId: exercises[0]?.id || "", sets: 3, reps: 10 });
+    setPlanRoutines(updated);
+  };
+
+  const updateRoutineExercise = (rIndex: number, eIndex: number, field: string, value: string | number) => {
+    const updated = [...planRoutines];
+    (updated[rIndex].exercises[eIndex] as any)[field] = value;
+    setPlanRoutines(updated);
+  };
+
+  const removeRoutineExercise = (rIndex: number, eIndex: number) => {
+    const updated = [...planRoutines];
+    updated[rIndex].exercises = updated[rIndex].exercises.filter((_, i) => i !== eIndex);
+    setPlanRoutines(updated);
   };
 
   const handleSavePlan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!planName) return alert("Dê um nome à ficha.");
-    if (planExercises.length === 0) return alert("Adicione pelo menos um exercício.");
+    
+    // Validate if all routines have exercises
+    for (let i = 0; i < planRoutines.length; i++) {
+      if (planRoutines[i].exercises.length === 0) {
+        return alert(`A rotina "${planRoutines[i].name}" não possui exercícios.`);
+      }
+    }
 
     setIsSubmittingPlan(true);
-    const res = await createWorkoutPlan(student.id, planName, planExercises);
+    const res = await createWorkoutPlan(student.id, planName, planRoutines);
     if (res?.error) alert(res.error);
-    else setIsPlanModalOpen(false);
+    else {
+      alert("Ficha criada com sucesso!");
+      setIsPlanModalOpen(false);
+      setPlanName("");
+      setPlanRoutines([{ name: "Treino A", exercises: [] }]);
+      setActiveRoutineTab(0);
+    }
     setIsSubmittingPlan(false);
   };
 
@@ -97,7 +140,7 @@ export default function StudentDetailClient({ student, exercises: initialExercis
           <Link href="/trainer" className={styles.backBtn}>&larr; Voltar</Link>
           <div className={styles.userInfo}>
             <h2>{student.name}</h2>
-            <p>E-mail: {student.email}</p>
+            <p>E-mail: {student.email} | ID: <strong>{student.shortId || "Sem ID"}</strong></p>
           </div>
         </div>
       </header>
@@ -105,7 +148,6 @@ export default function StudentDetailClient({ student, exercises: initialExercis
       <main className={styles.main}>
         <div className={styles.grid}>
           
-          {/* Coluna 1: Informações e Ficha */}
           <section className={styles.card}>
             <div className={styles.cardHeader}>
               <h3>Ficha Atual</h3>
@@ -136,7 +178,6 @@ export default function StudentDetailClient({ student, exercises: initialExercis
             </div>
           </section>
 
-          {/* Coluna 2: Avaliação / Evolução */}
           <section className={styles.card}>
             <h3>Acompanhamento e Avaliação</h3>
             
@@ -182,12 +223,12 @@ export default function StudentDetailClient({ student, exercises: initialExercis
       {/* Modal de Ficha de Treino */}
       {isPlanModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, overflowY: 'auto', padding: '2rem' }}>
-          <div style={{ background: '#1e1e2f', padding: '2rem', borderRadius: '12px', width: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ marginBottom: '1.5rem', color: '#00f2fe' }}>Montar Nova Ficha</h3>
+          <div style={{ background: '#1e1e2f', padding: '2rem', borderRadius: '12px', width: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 style={{ marginBottom: '1.5rem', color: '#00f2fe' }}>Montar Ficha Periodizada</h3>
             
             <form onSubmit={handleSavePlan}>
               <div style={{ marginBottom: '2rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Nome da Ficha (Ex: Hipertrofia A)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Nome da Ficha (Ex: Hipertrofia A/B/C)</label>
                 <input 
                   type="text" 
                   value={planName}
@@ -197,45 +238,80 @@ export default function StudentDetailClient({ student, exercises: initialExercis
                 />
               </div>
 
-              <h4 style={{ marginBottom: '1rem', borderBottom: '1px solid #334155', paddingBottom: '0.5rem' }}>Exercícios</h4>
-              
-              {planExercises.map((ex, index) => (
-                <div key={index} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
-                  <span style={{ color: '#64748b', fontSize: '0.9rem' }}>{index + 1}.</span>
-                  <select 
-                    value={ex.exerciseId} 
-                    onChange={e => updatePlanExercise(index, "exerciseId", e.target.value)}
-                    style={{ flex: 2, padding: '0.6rem', borderRadius: '6px', background: '#0f0f1a', color: '#fff', border: '1px solid #334155' }}
+              {/* Abas das Rotinas (Treino A, Treino B...) */}
+              <div style={{ display: 'flex', borderBottom: '1px solid #334155', marginBottom: '1rem', overflowX: 'auto' }}>
+                {planRoutines.map((routine, idx) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => setActiveRoutineTab(idx)}
+                    style={{ 
+                      padding: '0.8rem 1.5rem', 
+                      cursor: 'pointer',
+                      borderBottom: activeRoutineTab === idx ? '2px solid #00f2fe' : 'none',
+                      color: activeRoutineTab === idx ? '#00f2fe' : '#94a3b8',
+                      fontWeight: activeRoutineTab === idx ? 'bold' : 'normal',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}
                   >
-                    {exercises.map(libEx => <option key={libEx.id} value={libEx.id}>{libEx.name}</option>)}
-                  </select>
-                  <input 
-                    type="number" 
-                    placeholder="Séries" 
-                    value={ex.sets} 
-                    onChange={e => updatePlanExercise(index, "sets", parseInt(e.target.value))}
-                    style={{ flex: 1, padding: '0.6rem', borderRadius: '6px', background: '#0f0f1a', color: '#fff', border: '1px solid #334155' }}
-                  />
-                  <input 
-                    type="number" 
-                    placeholder="Reps" 
-                    value={ex.reps} 
-                    onChange={e => updatePlanExercise(index, "reps", parseInt(e.target.value))}
-                    style={{ flex: 1, padding: '0.6rem', borderRadius: '6px', background: '#0f0f1a', color: '#fff', border: '1px solid #334155' }}
-                  />
-                  <button type="button" onClick={() => setPlanExercises(planExercises.filter((_, i) => i !== index))} style={{ background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
-                </div>
-              ))}
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <button type="button" onClick={addExerciseToPlan} style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
-                  + Adicionar Linha
+                    {routine.name}
+                    {planRoutines.length > 1 && (
+                      <button type="button" onClick={(e) => { e.stopPropagation(); removeRoutine(idx); }} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem' }}>&times;</button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" onClick={addRoutine} style={{ padding: '0.8rem 1.5rem', background: 'transparent', border: 'none', color: '#10b981', cursor: 'pointer', fontWeight: 'bold' }}>
+                  + Adicionar Treino
                 </button>
+              </div>
+              
+              {/* Conteúdo da Rotina Ativa */}
+              <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', minHeight: '200px' }}>
+                <h4 style={{ marginBottom: '1rem', color: '#cbd5e1' }}>Exercícios do {planRoutines[activeRoutineTab].name}</h4>
+                
+                {planRoutines[activeRoutineTab].exercises.length === 0 && (
+                  <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1rem' }}>Nenhum exercício adicionado a este treino ainda.</p>
+                )}
 
+                {planRoutines[activeRoutineTab].exercises.map((ex, eIndex) => (
+                  <div key={eIndex} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
+                    <span style={{ color: '#64748b', fontSize: '0.9rem' }}>{eIndex + 1}.</span>
+                    <select 
+                      value={ex.exerciseId} 
+                      onChange={e => updateRoutineExercise(activeRoutineTab, eIndex, "exerciseId", e.target.value)}
+                      style={{ flex: 2, padding: '0.6rem', borderRadius: '6px', background: '#0f0f1a', color: '#fff', border: '1px solid #334155' }}
+                    >
+                      {exercises.map(libEx => <option key={libEx.id} value={libEx.id}>{libEx.name}</option>)}
+                    </select>
+                    <input 
+                      type="number" 
+                      placeholder="Séries" 
+                      value={ex.sets} 
+                      onChange={e => updateRoutineExercise(activeRoutineTab, eIndex, "sets", parseInt(e.target.value))}
+                      style={{ width: '80px', padding: '0.6rem', borderRadius: '6px', background: '#0f0f1a', color: '#fff', border: '1px solid #334155' }}
+                    />
+                    <input 
+                      type="number" 
+                      placeholder="Reps" 
+                      value={ex.reps} 
+                      onChange={e => updateRoutineExercise(activeRoutineTab, eIndex, "reps", parseInt(e.target.value))}
+                      style={{ width: '80px', padding: '0.6rem', borderRadius: '6px', background: '#0f0f1a', color: '#fff', border: '1px solid #334155' }}
+                    />
+                    <button type="button" onClick={() => removeRoutineExercise(activeRoutineTab, eIndex)} style={{ background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
+                  </div>
+                ))}
+
+                <button type="button" onClick={() => addExerciseToRoutine(activeRoutineTab)} style={{ padding: '0.6rem 1rem', background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                  + Adicionar Exercício
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <input 
                     type="text" 
-                    placeholder="Faltou exercício? Cadastre:" 
+                    placeholder="Cadastrar novo exercício no BD..." 
                     value={newExerciseName}
                     onChange={e => setNewExerciseName(e.target.value)}
                     style={{ padding: '0.5rem', borderRadius: '6px', background: '#0f0f1a', color: '#fff', border: '1px solid #334155', fontSize: '0.8rem' }}
@@ -251,7 +327,7 @@ export default function StudentDetailClient({ student, exercises: initialExercis
                   Cancelar
                 </button>
                 <button type="submit" disabled={isSubmittingPlan} style={{ flex: 1, padding: '0.8rem', background: '#00f2fe', border: 'none', color: '#0f0f1a', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', opacity: isSubmittingPlan ? 0.7 : 1 }}>
-                  {isSubmittingPlan ? "Salvando..." : "Finalizar Ficha"}
+                  {isSubmittingPlan ? "Salvando..." : "Finalizar Ficha (Todos os Treinos)"}
                 </button>
               </div>
             </form>

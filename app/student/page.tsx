@@ -17,11 +17,22 @@ export default async function StudentDashboard() {
     include: {
       gym: true,
       measurements: {
-        orderBy: { createdAt: 'asc' } // Para o gráfico evoluir na ordem certa
+        orderBy: { createdAt: 'asc' }
+      },
+      sessions: {
+        where: { status: 'COMPLETED' },
+        orderBy: { finishedAt: 'desc' },
+        take: 1,
+        include: { routine: true }
       },
       studentPlans: {
         orderBy: { createdAt: 'desc' },
-        take: 1
+        take: 1,
+        include: {
+          routines: {
+            orderBy: { orderIndex: 'asc' }
+          }
+        }
       }
     }
   });
@@ -30,10 +41,30 @@ export default async function StudentDashboard() {
     redirect("/login");
   }
 
-  const activePlan = rawStudent.studentPlans.length > 0 ? {
-    id: rawStudent.studentPlans[0].id,
-    name: rawStudent.studentPlans[0].name
-  } : null;
+  let activePlan = null;
+  let activeRoutine = null;
+
+  if (rawStudent.studentPlans.length > 0) {
+    const plan = rawStudent.studentPlans[0];
+    if (plan.routines.length > 0) {
+      activePlan = { id: plan.id, name: plan.name };
+      
+      const lastSession = rawStudent.sessions.length > 0 ? rawStudent.sessions[0] : null;
+      let nextIndex = 0;
+
+      if (lastSession && lastSession.routine.workoutPlanId === plan.id) {
+        const lastRoutineIndex = plan.routines.findIndex(r => r.id === lastSession.routineId);
+        if (lastRoutineIndex !== -1) {
+          nextIndex = (lastRoutineIndex + 1) % plan.routines.length;
+        }
+      }
+
+      activeRoutine = {
+        id: plan.routines[nextIndex].id,
+        name: plan.routines[nextIndex].name
+      };
+    }
+  }
 
   const measurements = rawStudent.measurements.map(m => {
     const d = new Date(m.createdAt);
@@ -51,6 +82,7 @@ export default async function StudentDashboard() {
     crystals: rawStudent.crystals,
     gymName: rawStudent.gym?.name || "GymTech",
     activePlan,
+    activeRoutine,
     measurements
   };
 

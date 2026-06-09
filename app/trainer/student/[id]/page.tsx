@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import StudentDetailClient from "./StudentDetailClient";
 
 export default async function StudentDetails({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const cookieStore = await cookies();
+  const gymId = cookieStore.get("gymId")?.value;
 
   const rawStudent = await prisma.user.findUnique({
     where: { id },
@@ -18,7 +21,7 @@ export default async function StudentDetails({ params }: { params: Promise<{ id:
     }
   });
 
-  if (!rawStudent) {
+  if (!rawStudent || rawStudent.gymId !== gymId) {
     redirect("/trainer");
   }
 
@@ -30,6 +33,7 @@ export default async function StudentDetails({ params }: { params: Promise<{ id:
     id: rawStudent.id,
     name: rawStudent.name,
     email: rawStudent.email,
+    shortId: rawStudent.shortId,
     currentPlan: rawStudent.studentPlans.length > 0 ? rawStudent.studentPlans[0].name : null,
     measurements: rawStudent.measurements.map(m => ({
       id: m.id,

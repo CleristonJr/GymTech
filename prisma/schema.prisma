@@ -103,29 +103,39 @@ model WorkoutPlan {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  exercises WorkoutExercise[]
-  sessions  WorkoutSession[]
+  routines  Routine[]
+}
+
+model Routine {
+  id            String      @id @default(cuid())
+  workoutPlanId String
+  name          String      // e.g. "Treino A", "Treino B"
+  orderIndex    Int         @default(0)
+  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
+  
+  exercises     WorkoutExercise[]
+  sessions      WorkoutSession[]
 }
 
 model WorkoutExercise {
   id            String      @id @default(cuid())
-  workoutPlanId String
+  routineId     String
   exerciseId    String
   sets          Int
   reps          Int
   restTimeSecs  Int         @default(60)
   orderIndex    Int         @default(0)
-  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id])
+  routine       Routine     @relation(fields: [routineId], references: [id], onDelete: Cascade)
   exercise      Exercise    @relation(fields: [exerciseId], references: [id])
 }
 
 model WorkoutSession {
   id            String      @id @default(cuid())
-  workoutPlanId String
+  routineId     String
   studentId     String
   startedAt     DateTime    @default(now())
   finishedAt    DateTime?
   status        String      @default("STARTED") // STARTED, COMPLETED
-  workoutPlan   WorkoutPlan @relation(fields: [workoutPlanId], references: [id])
+  routine       Routine     @relation(fields: [routineId], references: [id], onDelete: Cascade)
   student       User        @relation(fields: [studentId], references: [id])
 }

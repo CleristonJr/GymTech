@@ -3,12 +3,12 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import WorkoutClient from "./WorkoutClient";
 
-export default async function WorkoutExecution({ searchParams }: { searchParams: Promise<{ planId?: string }> }) {
+export default async function WorkoutExecution({ searchParams }: { searchParams: Promise<{ routineId?: string }> }) {
   const cookieStore = await cookies();
   const userId = cookieStore.get("userId")?.value;
-  const { planId } = await searchParams;
+  const { routineId } = await searchParams;
 
-  if (!userId || !planId) {
+  if (!userId || !routineId) {
     redirect("/student");
   }
 
@@ -18,9 +18,10 @@ export default async function WorkoutExecution({ searchParams }: { searchParams:
     redirect("/login");
   }
 
-  const plan = await prisma.workoutPlan.findUnique({
-    where: { id: planId },
+  const routine = await prisma.routine.findUnique({
+    where: { id: routineId },
     include: {
+      workoutPlan: true,
       exercises: {
         orderBy: { orderIndex: 'asc' },
         include: { exercise: true }
@@ -28,15 +29,15 @@ export default async function WorkoutExecution({ searchParams }: { searchParams:
     }
   });
 
-  if (!plan) {
+  if (!routine) {
     redirect("/student");
   }
 
-  const formattedExercises = plan.exercises.map(pe => ({
+  const formattedExercises = routine.exercises.map(pe => ({
     name: pe.exercise.name,
     sets: pe.sets,
     reps: pe.reps
   }));
 
-  return <WorkoutClient planId={plan.id} exercises={formattedExercises} currentStreak={user.streak} currentCrystals={user.crystals} />;
+  return <WorkoutClient routineId={routine.id} routineName={`${routine.workoutPlan.name} - ${routine.name}`} exercises={formattedExercises} currentStreak={user.streak} currentCrystals={user.crystals} />;
 }
