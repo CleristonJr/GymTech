@@ -14,10 +14,10 @@ export async function finishWorkoutSession(planId: string) {
     // Registra a sessão de treino no banco
     await prisma.workoutSession.create({
       data: {
-        userId,
-        planId,
+        studentId: userId,
+        workoutPlanId: planId,
         startedAt: new Date(Date.now() - 45 * 60000), // Simula que começou há 45 min
-        completedAt: new Date(),
+        finishedAt: new Date(),
         status: "COMPLETED"
       }
     });
