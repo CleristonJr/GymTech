@@ -5,22 +5,49 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import styles from "./page.module.css";
 
+import { loginUser } from "@/app/actions/auth";
+
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const emailLower = email.toLowerCase();
-    // Simulação básica de redirecionamento baseada no e-mail
-    if (emailLower.includes("admin@") || emailLower.includes("cleri")) {
-      router.push("/admin");
-    } else if (emailLower.includes("gestor@")) {
-      router.push("/manager");
-    } else if (emailLower.includes("personal@") || emailLower.includes("trainer@")) {
-      router.push("/trainer");
-    } else {
-      router.push("/student");
+    setErrorMsg("");
+    setIsLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const res = await loginUser(formData);
+
+    if (res?.error) {
+      setErrorMsg(res.error);
+      setIsLoading(false);
+      return;
+    }
+
+    if (res?.success) {
+      // Salva info básica no localStorage para uso do front-end
+      localStorage.setItem("userId", res.userId as string);
+      
+      if (res.mustChangePassword) {
+        router.push("/change-password");
+        return;
+      }
+
+      switch (res.role) {
+        case "SUPER_ADMIN":
+          router.push("/admin");
+          break;
+        case "GYM_ADMIN":
+          router.push("/manager");
+          break;
+        case "TRAINER":
+          router.push("/trainer");
+          break;
+        default:
+          router.push("/student");
+      }
     }
   };
 
@@ -32,24 +59,27 @@ export default function LoginPage() {
         <p className={styles.subtitle}>Faça login com suas credenciais.</p>
 
         <form className={styles.form} onSubmit={handleLogin}>
+          {errorMsg && <div style={{ color: '#ef4444', marginBottom: '1rem', background: 'rgba(239, 68, 68, 0.1)', padding: '0.8rem', borderRadius: '8px', fontSize: '0.9rem', textAlign: 'center' }}>{errorMsg}</div>}
+
           <div className={styles.inputGroup}>
             <label htmlFor="email">E-mail</label>
             <input 
+              name="email"
               type="email" 
               id="email" 
               placeholder="Ex: admin@gymtech.com" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               required 
             />
           </div>
 
           <div className={styles.inputGroup}>
             <label htmlFor="password">Senha</label>
-            <input type="password" id="password" placeholder="••••••••" required />
+            <input name="password" type="password" id="password" placeholder="••••••••" required />
           </div>
 
-          <button type="submit" className={styles.loginBtn}>Entrar</button>
+          <button type="submit" className={styles.loginBtn} disabled={isLoading}>
+            {isLoading ? "Entrando..." : "Entrar"}
+          </button>
         </form>
 
         <div className={styles.footer}>

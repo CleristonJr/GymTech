@@ -40,3 +40,50 @@ export async function setupSuperAdmin(formData: FormData) {
     return { error: "Ocorreu um erro ao tentar criar o usuário." };
   }
 }
+
+export async function loginUser(formData: FormData) {
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  if (!email || !password) return { error: "Preencha e-mail e senha." };
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return { error: "Credenciais inválidas." };
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) return { error: "Credenciais inválidas." };
+
+    return { 
+      success: true, 
+      role: user.role, 
+      mustChangePassword: user.mustChangePassword,
+      userId: user.id
+    };
+  } catch (error) {
+    console.error("Erro no login:", error);
+    return { error: "Erro no servidor ao tentar fazer login." };
+  }
+}
+
+export async function changeInitialPassword(userId: string, newPassword: string) {
+  try {
+    if (!userId || !newPassword) return { error: "Dados inválidos." };
+    if (newPassword.length < 6) return { error: "A senha deve ter no mínimo 6 caracteres." };
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        mustChangePassword: false
+      }
+    });
+
+    return { success: true, role: user.role };
+  } catch (error) {
+    console.error("Erro ao alterar senha:", error);
+    return { error: "Não foi possível alterar a senha. Tente novamente." };
+  }
+}
