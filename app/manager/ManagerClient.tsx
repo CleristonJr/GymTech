@@ -118,7 +118,26 @@ export default function ManagerClient({ gymName, trainers, students }: { gymName
                   <td>{user.email}</td>
                   {activeTab === "TRAINERS" && <td>{user._count?.studentPlans || 0}</td>}
                   <td>
-                    <button className={styles.actionBtnDanger} onClick={() => handleRemove(user.id, user.name)}>Remover</button>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {activeTab === "STUDENTS" && (
+                        <button className={styles.actionBtnPrimary} onClick={() => router.push(`/trainer/student/${user.id}`)}>
+                          Ver Perfil
+                        </button>
+                      )}
+                      <button className={styles.actionBtnSecondary} onClick={async () => {
+                        if (confirm(`Resetar a senha de ${user.name} para "123456"?`)) {
+                          const { resetUserPassword } = await import("@/app/actions/manager");
+                          const res = await resetUserPassword(user.id);
+                          if (res?.error) alert(res.error);
+                          else alert("Senha resetada com sucesso!");
+                        }
+                      }}>
+                        Resetar Senha
+                      </button>
+                      <button className={styles.actionBtnDanger} onClick={() => handleRemove(user.id, user.name)}>
+                        Remover
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

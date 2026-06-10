@@ -8,6 +8,10 @@ export default async function SuperAdminDashboard() {
     include: {
       _count: {
         select: { users: true }
+      },
+      users: {
+        where: { role: "GYM_ADMIN" },
+        select: { id: true, name: true, email: true }
       }
     }
   });

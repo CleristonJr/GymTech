@@ -69,3 +69,31 @@ export async function removeUser(userId: string) {
     return { error: "Erro ao remover o usuário. Ele pode estar vinculado a planos de treino." };
   }
 }
+
+export async function resetUserPassword(userId: string) {
+  try {
+    const gymId = await getManagerGymId();
+    if (!gymId) return { error: "Acesso negado." };
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.gymId !== gymId) {
+      return { error: "Usuário não encontrado ou não pertence à sua academia." };
+    }
+
+    const hashedPassword = await bcrypt.hash("123456", 10);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        mustChangePassword: true
+      }
+    });
+
+    revalidatePath("/manager");
+    return { success: true };
+  } catch (error) {
+    console.error("Erro ao resetar senha:", error);
+    return { error: "Erro ao resetar a senha." };
+  }
+}

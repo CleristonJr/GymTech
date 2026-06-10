@@ -7,6 +7,7 @@ export default async function StudentDetails({ params }: { params: Promise<{ id:
   const { id } = await params;
   const cookieStore = await cookies();
   const gymId = cookieStore.get("gymId")?.value;
+  const role = cookieStore.get("userRole")?.value;
 
   const rawStudent = await prisma.user.findUnique({
     where: { id },
@@ -21,7 +22,8 @@ export default async function StudentDetails({ params }: { params: Promise<{ id:
     }
   });
 
-  if (!rawStudent || rawStudent.gymId !== gymId) {
+  if (!rawStudent || rawStudent.gymId !== gymId || (role !== "TRAINER" && role !== "GYM_ADMIN")) {
+    if (role === "GYM_ADMIN") redirect("/manager");
     redirect("/trainer");
   }
 

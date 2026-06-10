@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { createGym, updateGym, toggleGymStatus, deleteGym } from "@/app/actions/gyms";
 import styles from "./page.module.css";
@@ -10,6 +10,7 @@ type GymData = {
   name: string;
   status: string;
   _count: { users: number };
+  users: { id: string; name: string; email: string }[];
 };
 
 export default function AdminGymClient({ gyms }: { gyms: GymData[] }) {
@@ -95,6 +96,34 @@ export default function AdminGymClient({ gyms }: { gyms: GymData[] }) {
     }
   };
 
+  const handleResetAdminPassword = async (adminId: string, adminName: string) => {
+    if (confirm(`Resetar a senha do gestor ${adminName} para "123456"?`)) {
+      const { resetAdminPassword } = await import("@/app/actions/admin");
+      const res = await resetAdminPassword(adminId);
+      if (res?.error) alert(res.error);
+      else alert("Senha do gestor resetada com sucesso!");
+    }
+  };
+
+  const handleRemoveAdmin = async (adminId: string, adminName: string) => {
+    if (confirm(`Tem certeza que deseja remover o gestor ${adminName}? Ele perderá o acesso à academia.`)) {
+      const { removeAdmin } = await import("@/app/actions/admin");
+      const res = await removeAdmin(adminId);
+      if (res?.error) alert(res.error);
+      else alert("Gestor removido.");
+    }
+  };
+
+  const handleChangeAdminEmail = async (adminId: string, currentEmail: string) => {
+    const newEmail = prompt("Digite o novo e-mail para o gestor:", currentEmail);
+    if (newEmail && newEmail !== currentEmail) {
+      const { changeAdminEmail } = await import("@/app/actions/admin");
+      const res = await changeAdminEmail(adminId, newEmail);
+      if (res?.error) alert(res.error);
+      else alert("E-mail atualizado com sucesso.");
+    }
+  };
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
@@ -126,25 +155,49 @@ export default function AdminGymClient({ gyms }: { gyms: GymData[] }) {
               {gyms.length === 0 ? (
                 <tr><td colSpan={5} style={{textAlign: 'center', padding: '2rem'}}>Nenhuma academia cadastrada.</td></tr>
               ) : gyms.map(gym => (
-                <tr key={gym.id} style={{ opacity: gym.status === "SUSPENDED" ? 0.5 : 1 }}>
-                  <td>#{gym.id.slice(0,5).toUpperCase()}</td>
-                  <td>{gym.name}</td>
-                  <td>{gym._count.users}</td>
-                  <td>
-                    <span className={styles.badge} style={{ background: gym.status === "ACTIVE" ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: gym.status === "ACTIVE" ? '#10b981' : '#ef4444' }}>
-                      {gym.status === "ACTIVE" ? "Ativa" : "Suspensa"}
-                    </span>
-                  </td>
-                  <td>
-                    <button className={styles.actionBtn} onClick={() => openEditModal(gym)}>Editar</button>
-                    <button className={styles.actionBtn} style={{ borderColor: '#ef4444', color: '#ef4444', marginLeft: '8px' }} onClick={() => handleSuspend(gym.id, gym.status)}>
-                      {gym.status === "ACTIVE" ? "Suspender" : "Reativar"}
-                    </button>
-                    <button className={styles.actionBtnDanger} style={{ marginLeft: '8px' }} onClick={() => handleDelete(gym.id)}>
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
+                <Fragment key={gym.id}>
+                  <tr style={{ opacity: gym.status === "SUSPENDED" ? 0.5 : 1 }}>
+                    <td>#{gym.id.slice(0,5).toUpperCase()}</td>
+                    <td>{gym.name}</td>
+                    <td>{gym._count.users}</td>
+                    <td>
+                      <span className={styles.badge} style={{ background: gym.status === "ACTIVE" ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: gym.status === "ACTIVE" ? '#10b981' : '#ef4444' }}>
+                        {gym.status === "ACTIVE" ? "Ativa" : "Suspensa"}
+                      </span>
+                    </td>
+                    <td>
+                      <button className={styles.actionBtn} onClick={() => openEditModal(gym)}>Editar</button>
+                      <button className={styles.actionBtn} style={{ borderColor: '#ef4444', color: '#ef4444', marginLeft: '8px' }} onClick={() => handleSuspend(gym.id, gym.status)}>
+                        {gym.status === "ACTIVE" ? "Suspender" : "Reativar"}
+                      </button>
+                      <button className={styles.actionBtnDanger} style={{ marginLeft: '8px' }} onClick={() => handleDelete(gym.id)}>
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                  {gym.users && gym.users.length > 0 && (
+                    <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                      <td colSpan={5} style={{ padding: '1rem' }}>
+                        <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.5rem' }}><strong>Gestores (Gym Admins):</strong></div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {gym.users.map(admin => (
+                            <div key={admin.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f0f1a', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155' }}>
+                              <div>
+                                <span style={{ fontWeight: 'bold', marginRight: '1rem' }}>{admin.name}</span>
+                                <span style={{ color: '#94a3b8' }}>{admin.email}</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button className={styles.actionBtnSecondary} onClick={() => handleResetAdminPassword(admin.id, admin.name)}>Resetar Senha</button>
+                                <button className={styles.actionBtnSecondary} onClick={() => handleChangeAdminEmail(admin.id, admin.email)}>Trocar E-mail</button>
+                                <button className={styles.actionBtnDanger} onClick={() => handleRemoveAdmin(admin.id, admin.name)}>Excluir Gestor</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
