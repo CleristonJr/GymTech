@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 export async function setupSuperAdmin(formData: FormData) {
-  const email = formData.get("email") as string;
+  const email = (formData.get("email") as string)?.trim();
   const password = formData.get("password") as string;
 
   if (!email || !password) {
@@ -44,7 +44,7 @@ export async function setupSuperAdmin(formData: FormData) {
 import { cookies } from "next/headers";
 
 export async function loginUser(formData: FormData) {
-  const email = formData.get("email") as string;
+  const email = (formData.get("email") as string)?.trim();
   const password = formData.get("password") as string;
 
   if (!email || !password) return { error: "Preencha e-mail e senha." };

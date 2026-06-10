@@ -18,10 +18,11 @@ export async function createStaffMember(name: string, email: string, role: "TRAI
     const gymId = await getManagerGymId();
     if (!gymId) return { error: "Acesso negado. Você não está vinculado a uma academia." };
 
-    if (!name || !email) return { error: "Nome e e-mail são obrigatórios." };
+    const cleanEmail = email?.trim();
+    if (!name || !cleanEmail) return { error: "Nome e e-mail são obrigatórios." };
 
     // Verifica se e-mail existe
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email: cleanEmail } });
     if (existingUser) return { error: "Este e-mail já está em uso." };
 
     // Senha padrão ou fornecida
@@ -31,7 +32,7 @@ export async function createStaffMember(name: string, email: string, role: "TRAI
     await prisma.user.create({
       data: {
         name,
-        email,
+        email: cleanEmail,
         password: hashedPassword,
         role,
         gymId,
