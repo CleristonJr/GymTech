@@ -18,7 +18,7 @@ export default function AdminGymClient({ gyms }: { gyms: GymData[] }) {
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingGym, setEditingGym] = useState<{id: string, name: string} | null>(null);
+  const [editingGym, setEditingGym] = useState<GymData | null>(null);
   
   // Form Fields
   const [gymName, setGymName] = useState("");
@@ -42,7 +42,7 @@ export default function AdminGymClient({ gyms }: { gyms: GymData[] }) {
   };
 
   const openEditModal = (gym: GymData) => {
-    setEditingGym({ id: gym.id, name: gym.name });
+    setEditingGym(gym);
     setGymName(gym.name);
     setErrorMsg("");
     setIsModalOpen(true);
@@ -175,28 +175,6 @@ export default function AdminGymClient({ gyms }: { gyms: GymData[] }) {
                       </button>
                     </td>
                   </tr>
-                  {gym.users && gym.users.length > 0 && (
-                    <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                      <td colSpan={5} style={{ padding: '1rem' }}>
-                        <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '0.5rem' }}><strong>Gestores (Gym Admins):</strong></div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          {gym.users.map(admin => (
-                            <div key={admin.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#0f0f1a', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155' }}>
-                              <div>
-                                <span style={{ fontWeight: 'bold', marginRight: '1rem' }}>{admin.name}</span>
-                                <span style={{ color: '#94a3b8' }}>{admin.email}</span>
-                              </div>
-                              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <button className={styles.actionBtnSecondary} onClick={() => handleResetAdminPassword(admin.id, admin.name)}>Resetar Senha</button>
-                                <button className={styles.actionBtnSecondary} onClick={() => handleChangeAdminEmail(admin.id, admin.email)}>Trocar E-mail</button>
-                                <button className={styles.actionBtnDanger} onClick={() => handleRemoveAdmin(admin.id, admin.name)}>Excluir Gestor</button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  )}
                 </Fragment>
               ))}
             </tbody>
@@ -250,6 +228,30 @@ export default function AdminGymClient({ gyms }: { gyms: GymData[] }) {
                       style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', background: '#0f0f1a', color: '#fff' }}
                     />
                     <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>O gestor será forçado a alterar esta senha no primeiro login.</p>
+                  </div>
+                </div>
+              )}
+
+              {editingGym && editingGym.users && editingGym.users.length > 0 && (
+                <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', border: '1px solid #334155' }}>
+                  <h4 style={{ marginBottom: '1rem', fontSize: '0.95rem' }}>Gestores da Academia</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    {editingGym.users.map(admin => (
+                      <div key={admin.id} style={{ display: 'flex', flexDirection: 'column', background: '#0f0f1a', padding: '0.8rem', borderRadius: '8px', border: '1px solid #1e293b' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                          <span style={{ fontWeight: 'bold' }}>{admin.name}</span>
+                          <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>{admin.email}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button type="button" className={styles.actionBtnSecondary} onClick={() => handleResetAdminPassword(admin.id, admin.name)}>Resetar Senha</button>
+                          <button type="button" className={styles.actionBtnSecondary} onClick={() => handleChangeAdminEmail(admin.id, admin.email)}>Trocar E-mail</button>
+                          <button type="button" className={styles.actionBtnDanger} onClick={() => {
+                            handleRemoveAdmin(admin.id, admin.name);
+                            closeModal();
+                          }}>Excluir Gestor</button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
