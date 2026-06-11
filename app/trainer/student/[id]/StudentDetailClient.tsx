@@ -83,7 +83,7 @@ export default function StudentDetailClient({ student, exercises: initialExercis
 
   const addExerciseToRoutine = (rIndex: number) => {
     const updated = [...planRoutines];
-    updated[rIndex].exercises.push({ exerciseId: exercises[0]?.id || "", sets: 3, reps: 10 });
+    updated[rIndex].exercises.push({ exerciseId: "", sets: 3, reps: 10 });
     setPlanRoutines(updated);
   };
 
@@ -103,10 +103,15 @@ export default function StudentDetailClient({ student, exercises: initialExercis
     e.preventDefault();
     if (!planName) return alert("Dê um nome à ficha.");
     
-    // Validate if all routines have exercises
+    // Validate if all routines have exercises and valid IDs
     for (let i = 0; i < planRoutines.length; i++) {
       if (planRoutines[i].exercises.length === 0) {
-        return alert(`A rotina "${planRoutines[i].name}" não possui exercícios.`);
+        return alert(`O "${planRoutines[i].name}" não possui exercícios. Adicione pelo menos um.`);
+      }
+      for (let j = 0; j < planRoutines[i].exercises.length; j++) {
+        if (!planRoutines[i].exercises[j].exerciseId) {
+          return alert(`Por favor, selecione qual é o exercício ${j + 1} do ${planRoutines[i].name}.`);
+        }
       }
     }
 
@@ -281,7 +286,9 @@ export default function StudentDetailClient({ student, exercises: initialExercis
                       value={ex.exerciseId} 
                       onChange={e => updateRoutineExercise(activeRoutineTab, eIndex, "exerciseId", e.target.value)}
                       style={{ flex: 2, padding: '0.6rem', borderRadius: '6px', background: '#0f0f1a', color: '#fff', border: '1px solid #334155' }}
+                      required
                     >
+                      <option value="" disabled>Selecione o exercício...</option>
                       {exercises.map(libEx => <option key={libEx.id} value={libEx.id}>{libEx.name}</option>)}
                     </select>
                     <input 

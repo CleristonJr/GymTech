@@ -27,7 +27,6 @@ export default function LoginPage() {
     }
 
     if (res?.success) {
-      // Salva info básica no localStorage para uso do front-end
       localStorage.setItem("userId", res.userId as string);
       
       if (res.mustChangePassword) {
