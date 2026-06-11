@@ -80,5 +80,5 @@ export default async function StudentDetails({ params }: { params: Promise<{ id:
     }))
   };
 
-  return <StudentDetailClient student={studentData} exercises={exercises} templates={trainerTemplates} />;
+  return <StudentDetailClient student={studentData} exercises={exercises} templates={trainerTemplates} userRole={role as string} />;
 }

@@ -32,7 +32,7 @@ type RoutineDraft = {
   exercises: { exerciseId: string; sets: number; reps: number | null; duration: string | null; restTimeSecs: number; observation: string | null }[];
 };
 
-export default function StudentDetailClient({ student, exercises: initialExercises, templates }: { student: StudentProfile, exercises: ExerciseData[], templates: any[] }) {
+export default function StudentDetailClient({ student, exercises: initialExercises, templates, userRole }: { student: StudentProfile, exercises: ExerciseData[], templates: any[], userRole: string }) {
   const [exercises, setExercises] = useState(initialExercises);
   const [newNote, setNewNote] = useState("");
   const [newWeight, setNewWeight] = useState("");
@@ -199,7 +199,7 @@ export default function StudentDetailClient({ student, exercises: initialExercis
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <Link href="/trainer" className={styles.backBtn}>&larr; Voltar</Link>
+          <Link href={userRole === "GYM_ADMIN" ? "/manager" : "/trainer"} className={styles.backBtn}>&larr; Voltar</Link>
           <div className={styles.userInfo}>
             <h2>{student.name}</h2>
             <p>E-mail: {student.email} | ID: <strong>{student.shortId || "Sem ID"}</strong></p>

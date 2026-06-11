@@ -36,5 +36,5 @@ export default async function TemplatesPage() {
     orderBy: { name: 'asc' }
   });
 
-  return <TemplatesClient initialTemplates={templates} exercises={exercises} />;
+  return <TemplatesClient initialTemplates={templates} exercises={exercises} userRole={session.role as string} />;
 }

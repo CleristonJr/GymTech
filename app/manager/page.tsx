@@ -6,7 +6,13 @@ import ManagerClient from "./ManagerClient";
 
 export default async function GymManagerDashboard() {
   const session = await getSession();
-  if (!session || !session.gymId || session.role !== "GYM_ADMIN") {
+  if (!session || !session.gymId) {
+    redirect("/login");
+  }
+  if (session.role !== "GYM_ADMIN") {
+    if (session.role === "TRAINER") redirect("/trainer");
+    if (session.role === "SUPER_ADMIN") redirect("/admin");
+    if (session.role === "STUDENT") redirect("/student");
     redirect("/login");
   }
   const gymId = session.gymId;

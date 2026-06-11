@@ -7,7 +7,13 @@ import { getSession } from "@/lib/session";
 
 export default async function TrainerDashboard() {
   const session = await getSession();
-  if (!session || !session.gymId || session.role !== "TRAINER") {
+  if (!session || !session.gymId) {
+    redirect("/login");
+  }
+  if (session.role !== "TRAINER") {
+    if (session.role === "GYM_ADMIN") redirect("/manager");
+    if (session.role === "SUPER_ADMIN") redirect("/admin");
+    if (session.role === "STUDENT") redirect("/student");
     redirect("/login");
   }
   const gymId = session.gymId;

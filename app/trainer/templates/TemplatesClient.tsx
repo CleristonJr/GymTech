@@ -11,7 +11,7 @@ type RoutineDraft = {
   exercises: { exerciseId: string; sets: number; reps: number | null; duration: string | null; restTimeSecs: number; observation: string | null }[];
 };
 
-export default function TemplatesClient({ initialTemplates, exercises: initialExercises }: { initialTemplates: any[], exercises: ExerciseData[] }) {
+export default function TemplatesClient({ initialTemplates, exercises: initialExercises, userRole }: { initialTemplates: any[], exercises: ExerciseData[], userRole: string }) {
   const [templates, setTemplates] = useState(initialTemplates);
   const [exercises, setExercises] = useState(initialExercises);
   const [newExerciseName, setNewExerciseName] = useState("");
@@ -136,7 +136,7 @@ export default function TemplatesClient({ initialTemplates, exercises: initialEx
     <div className={styles.container}>
       <header className={styles.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <Link href="/trainer" style={{ color: '#00f2fe', textDecoration: 'none', fontWeight: 'bold' }}>&larr; Voltar</Link>
+          <Link href={userRole === "GYM_ADMIN" ? "/manager" : "/trainer"} style={{ color: '#00f2fe', textDecoration: 'none', fontWeight: 'bold' }}>&larr; Voltar</Link>
           <div className={styles.userInfo}>
             <h2>Meus Modelos de Ficha</h2>
             <p>Crie fichas genéricas para reutilizar nos seus alunos</p>
