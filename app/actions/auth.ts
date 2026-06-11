@@ -56,13 +56,9 @@ export async function loginUser(formData: FormData) {
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) return { error: "Credenciais inválidas." };
 
-    // Define cookies de sessão simples para acesso nos Server Components
-    const cookieStore = await cookies();
-    cookieStore.set('userId', user.id, { path: '/' });
-    cookieStore.set('userRole', user.role, { path: '/' });
-    if (user.gymId) {
-      cookieStore.set('gymId', user.gymId, { path: '/' });
-    }
+    // Criar a sessão encriptada via JWT e cookie HttpOnly
+    const { createSession } = await import("@/lib/session");
+    await createSession(user.id, user.role, user.gymId);
 
     return { 
       success: true, 
@@ -96,4 +92,9 @@ export async function changeInitialPassword(userId: string, newPassword: string)
     console.error("Erro ao alterar senha:", error);
     return { error: "Não foi possível alterar a senha. Tente novamente." };
   }
+}
+
+export async function logout() {
+  const { deleteSession } = await import("@/lib/session");
+  await deleteSession();
 }

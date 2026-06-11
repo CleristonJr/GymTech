@@ -4,10 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import { getSession } from "@/lib/session";
 
 async function isSuperAdmin() {
-  const cookieStore = await cookies();
-  return cookieStore.get('userRole')?.value === "SUPER_ADMIN";
+  const session = await getSession();
+  return session?.role === "SUPER_ADMIN";
 }
 
 export async function resetAdminPassword(userId: string) {

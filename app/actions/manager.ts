@@ -5,12 +5,13 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 
+import { getSession } from "@/lib/session";
+
 // Helper para pegar o gymId do gestor logado e garantir que ele é gestor
 async function getManagerGymId() {
-  const cookieStore = await cookies();
-  const role = cookieStore.get('userRole')?.value;
-  if (role !== "GYM_ADMIN") return null;
-  return cookieStore.get('gymId')?.value;
+  const session = await getSession();
+  if (!session || session.role !== "GYM_ADMIN") return null;
+  return session.gymId;
 }
 
 export async function createStaffMember(name: string, email: string, role: "TRAINER" | "STUDENT", temporaryPassword?: string) {

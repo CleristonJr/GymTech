@@ -3,14 +3,14 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import TrainerClient from "./TrainerClient";
 
-export default async function TrainerDashboard() {
-  const cookieStore = await cookies();
-  const gymId = cookieStore.get("gymId")?.value;
-  const role = cookieStore.get("userRole")?.value;
+import { getSession } from "@/lib/session";
 
-  if (!gymId || role !== "TRAINER") {
+export default async function TrainerDashboard() {
+  const session = await getSession();
+  if (!session || !session.gymId || session.role !== "TRAINER") {
     redirect("/login");
   }
+  const gymId = session.gymId;
 
   // Busca todos os alunos desta academia
   const rawStudents = await prisma.user.findMany({

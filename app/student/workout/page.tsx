@@ -36,7 +36,10 @@ export default async function WorkoutExecution({ searchParams }: { searchParams:
   const formattedExercises = routine.exercises.map(pe => ({
     name: pe.exercise.name,
     sets: pe.sets,
-    reps: pe.reps
+    reps: pe.reps,
+    duration: pe.duration,
+    restTimeSecs: pe.restTimeSecs,
+    observation: pe.observation
   }));
 
   return <WorkoutClient routineId={routine.id} routineName={`${routine.workoutPlan.name} - ${routine.name}`} exercises={formattedExercises} currentStreak={user.streak} currentCrystals={user.crystals} />;

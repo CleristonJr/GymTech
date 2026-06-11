@@ -2,120 +2,59 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import styles from "./page.module.css";
-import { addMeasurement, createWorkoutPlan, updateWorkoutPlan, createExercise } from "@/app/actions/trainer";
+import styles from "../../admin/page.module.css";
+import { createWorkoutTemplate, updateWorkoutPlan, deleteWorkoutTemplate, createExercise } from "@/app/actions/trainer";
 
-type MeasurementData = {
-  id: string;
-  date: Date;
-  weight: number;
-  bodyFat: number | null;
-  note: string | null;
-};
-
-type ExerciseData = {
-  id: string;
-  name: string;
-};
-
-type StudentProfile = {
-  id: string;
-  name: string;
-  email: string;
-  shortId: string | null;
-  measurements: MeasurementData[];
-  currentPlan: any | null;
-};
-
+type ExerciseData = { id: string; name: string };
 type RoutineDraft = {
   name: string;
   exercises: { exerciseId: string; sets: number; reps: number | null; duration: string | null; restTimeSecs: number; observation: string | null }[];
 };
 
-export default function StudentDetailClient({ student, exercises: initialExercises, templates }: { student: StudentProfile, exercises: ExerciseData[], templates: any[] }) {
+export default function TemplatesClient({ initialTemplates, exercises: initialExercises }: { initialTemplates: any[], exercises: ExerciseData[] }) {
+  const [templates, setTemplates] = useState(initialTemplates);
   const [exercises, setExercises] = useState(initialExercises);
-  const [newNote, setNewNote] = useState("");
-  const [newWeight, setNewWeight] = useState("");
-  const [newBodyFat, setNewBodyFat] = useState("");
-  const [isSubmittingEvo, setIsSubmittingEvo] = useState(false);
-
-  // Modal de Ficha
-  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
-  const [planName, setPlanName] = useState("");
-  const [planRoutines, setPlanRoutines] = useState<RoutineDraft[]>([
-    { name: "Treino A", exercises: [] }
-  ]);
-  const [activeRoutineTab, setActiveRoutineTab] = useState(0);
-  const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
-
-  // Cadastro rápido de exercício
   const [newExerciseName, setNewExerciseName] = useState("");
 
-  const handleAddEvolution = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newWeight) return alert("O peso é obrigatório.");
-    setIsSubmittingEvo(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
+  
+  const [planName, setPlanName] = useState("");
+  const [planRoutines, setPlanRoutines] = useState<RoutineDraft[]>([{ name: "Treino A", exercises: [] }]);
+  const [activeRoutineTab, setActiveRoutineTab] = useState(0);
 
-    const res = await addMeasurement(student.id, parseFloat(newWeight), newBodyFat ? parseFloat(newBodyFat) : null, newNote);
-    
-    if (res?.error) alert(res.error);
-    else {
-      setNewNote("");
-      setNewWeight("");
-      setNewBodyFat("");
-    }
-    setIsSubmittingEvo(false);
-  };
-
-  const openNewPlan = () => {
+  const openNewTemplate = () => {
     setEditingPlanId(null);
     setPlanName("");
     setPlanRoutines([{ name: "Treino A", exercises: [] }]);
     setActiveRoutineTab(0);
-    setIsPlanModalOpen(true);
+    setIsModalOpen(true);
   };
 
-  const openEditPlan = () => {
-    if (!student.currentPlan) return;
-    setEditingPlanId(student.currentPlan.id);
-    setPlanName(student.currentPlan.name);
-    setPlanRoutines(student.currentPlan.routines.map((r: any) => ({
-      name: r.name,
-      exercises: r.exercises.map((e: any) => ({
-        exerciseId: e.exerciseId,
-        sets: e.sets,
-        reps: e.reps,
-        duration: e.duration || null,
-        restTimeSecs: e.restTimeSecs || 60,
-        observation: e.observation || null
-      }))
-    })));
-    setActiveRoutineTab(0);
-    setIsPlanModalOpen(true);
-  };
-
-  const handleImportTemplate = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const tmplId = e.target.value;
-    if (!tmplId) return;
-    const tmpl = templates.find(t => t.id === tmplId);
-    if (!tmpl) return;
-
-    if (!confirm(`Deseja importar o modelo "${tmpl.name}"? Isso substituirá o que está preenchido agora.`)) return;
-
+  const openEditTemplate = (tmpl: any) => {
+    setEditingPlanId(tmpl.id);
     setPlanName(tmpl.name);
     setPlanRoutines(tmpl.routines.map((r: any) => ({
       name: r.name,
       exercises: r.exercises.map((e: any) => ({
         exerciseId: e.exerciseId,
         sets: e.sets,
-        reps: e.reps,
-        duration: e.duration || null,
-        restTimeSecs: e.restTimeSecs || 60,
-        observation: e.observation || null
+        reps: e.reps
       }))
     })));
     setActiveRoutineTab(0);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir este modelo? Ele não afetará alunos que já o importaram.")) return;
+    const res = await deleteWorkoutTemplate(id);
+    if (res?.error) alert(res.error);
+    else {
+      setTemplates(templates.filter((t: any) => t.id !== id));
+      alert("Modelo excluído com sucesso.");
+    }
   };
 
   const addRoutine = () => {
@@ -152,9 +91,8 @@ export default function StudentDetailClient({ student, exercises: initialExercis
 
   const handleSavePlan = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!planName) return alert("Dê um nome à ficha.");
+    if (!planName) return alert("Dê um nome ao modelo.");
     
-    // Validate if all routines have exercises and valid IDs
     for (let i = 0; i < planRoutines.length; i++) {
       if (planRoutines[i].exercises.length === 0) {
         return alert(`O "${planRoutines[i].name}" não possui exercícios. Adicione pelo menos um.`);
@@ -166,23 +104,22 @@ export default function StudentDetailClient({ student, exercises: initialExercis
       }
     }
 
-    setIsSubmittingPlan(true);
+    setIsSubmitting(true);
     let res;
     if (editingPlanId) {
       res = await updateWorkoutPlan(editingPlanId, planName, planRoutines);
     } else {
-      res = await createWorkoutPlan(student.id, planName, planRoutines);
+      res = await createWorkoutTemplate(planName, planRoutines);
     }
-    
+
     if (res?.error) alert(res.error);
     else {
-      alert("Ficha criada com sucesso!");
-      setIsPlanModalOpen(false);
-      setPlanName("");
-      setPlanRoutines([{ name: "Treino A", exercises: [] }]);
-      setActiveRoutineTab(0);
+      alert(`Modelo ${editingPlanId ? "atualizado" : "criado"} com sucesso! Recarregue a página para ver a lista atualizada.`);
+      setIsModalOpen(false);
+      // Simplesmente recarregar para pegar a lista do server
+      window.location.reload();
     }
-    setIsSubmittingPlan(false);
+    setIsSubmitting(false);
   };
 
   const handleCreateNewExercise = async () => {
@@ -198,135 +135,74 @@ export default function StudentDetailClient({ student, exercises: initialExercis
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <Link href="/trainer" className={styles.backBtn}>&larr; Voltar</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <Link href="/trainer" style={{ color: '#00f2fe', textDecoration: 'none', fontWeight: 'bold' }}>&larr; Voltar</Link>
           <div className={styles.userInfo}>
-            <h2>{student.name}</h2>
-            <p>E-mail: {student.email} | ID: <strong>{student.shortId || "Sem ID"}</strong></p>
+            <h2>Meus Modelos de Ficha</h2>
+            <p>Crie fichas genéricas para reutilizar nos seus alunos</p>
           </div>
         </div>
       </header>
 
       <main className={styles.main}>
-        <div className={styles.grid}>
-          
-          <section className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h3>Ficha Atual</h3>
-              {student.currentPlan ? (
-                <button 
-                  onClick={openEditPlan}
-                  className={styles.badge} 
-                  style={{ fontSize: '1rem', padding: '0.4rem 1rem', cursor: 'pointer', border: '1px solid #00f2fe', background: 'transparent' }}
-                  title="Clique para editar"
-                >
-                  {student.currentPlan.name} ✏️
-                </button>
-              ) : (
-                <span className={styles.badge} style={{ fontSize: '1rem', padding: '0.4rem 1rem' }}>
-                  Nenhuma ficha ativa
-                </span>
-              )}
-            </div>
+        <div className={styles.actionsBar} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3>Modelos Cadastrados</h3>
+          <button 
+            className={styles.actionBtn} 
+            style={{ background: '#10b981', border: 'none', color: '#fff' }}
+            onClick={openNewTemplate}
+          >
+            + Criar Novo Modelo
+          </button>
+        </div>
 
-            <div style={{ marginTop: '2rem' }}>
-              <button 
-                onClick={openNewPlan}
-                style={{ width: '100%', padding: '1rem', background: '#00f2fe', color: '#0f0f1a', fontWeight: 'bold', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '1.1rem' }}
-              >
-                + Montar Nova Ficha de Treino
-              </button>
-            </div>
-            
-            <div style={{ marginTop: '2rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-              <h4>Últimas Medidas</h4>
-              {student.measurements.length > 0 ? (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
-                  <div><span>Peso Atual:</span> <strong style={{ color: '#00f2fe', fontSize: '1.2rem', marginLeft: '0.5rem' }}>{student.measurements[0].weight}kg</strong></div>
-                  {student.measurements[0].bodyFat && <div><span>BF:</span> <strong style={{ color: '#00f2fe', fontSize: '1.2rem', marginLeft: '0.5rem' }}>{student.measurements[0].bodyFat}%</strong></div>}
-                </div>
-              ) : (
-                <p style={{ marginTop: '1rem', color: '#94a3b8' }}>Nenhuma avaliação registrada.</p>
-              )}
-            </div>
-          </section>
-
-          <section className={styles.card}>
-            <h3>Acompanhamento e Avaliação</h3>
-            
-            <form className={styles.evolutionForm} onSubmit={handleAddEvolution}>
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '0.3rem' }}>Peso (kg)</label>
-                  <input type="number" step="0.1" value={newWeight} onChange={e => setNewWeight(e.target.value)} required style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #334155', background: '#0f0f1a', color: '#fff' }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#cbd5e1', marginBottom: '0.3rem' }}>Gordura Corporal (%)</label>
-                  <input type="number" step="0.1" value={newBodyFat} onChange={e => setNewBodyFat(e.target.value)} style={{ width: '100%', padding: '0.6rem', borderRadius: '6px', border: '1px solid #334155', background: '#0f0f1a', color: '#fff' }} />
-                </div>
-              </div>
-
-              <textarea 
-                placeholder="Anotações sobre a evolução, feedback do treino..."
-                value={newNote}
-                onChange={(e) => setNewNote(e.target.value)}
-                rows={3}
-              />
-              <button type="submit" className={styles.addBtn} disabled={isSubmittingEvo}>
-                {isSubmittingEvo ? "Registrando..." : "+ Registrar Avaliação"}
-              </button>
-            </form>
-
-            <div className={styles.timeline}>
-              {student.measurements.map(evo => (
-                <div key={evo.id} className={styles.timelineItem}>
-                  <div className={styles.timelineDate}>{new Date(evo.date).toLocaleDateString('pt-BR')}</div>
-                  <div className={styles.timelineContent}>
-                    <p><strong>Peso:</strong> {evo.weight}kg {evo.bodyFat && `| BF: ${evo.bodyFat}%`}</p>
-                    {evo.note && <p style={{ marginTop: '0.5rem', color: '#cbd5e1' }}>{evo.note}</p>}
-                  </div>
-                </div>
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Nome do Modelo</th>
+                <th>Rotinas</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {templates.length === 0 ? (
+                <tr><td colSpan={3} style={{textAlign: 'center', padding: '2rem'}}>Nenhum modelo cadastrado ainda.</td></tr>
+              ) : templates.map(tmpl => (
+                <tr key={tmpl.id}>
+                  <td><strong>{tmpl.name}</strong></td>
+                  <td>{tmpl.routines.map((r: any) => r.name).join(", ")}</td>
+                  <td>
+                    <button className={styles.actionBtn} style={{ marginRight: '0.5rem' }} onClick={() => openEditTemplate(tmpl)}>Editar</button>
+                    <button className={styles.actionBtn} style={{ background: '#ef4444', color: '#fff', border: 'none' }} onClick={() => handleDeleteTemplate(tmpl.id)}>Excluir</button>
+                  </td>
+                </tr>
               ))}
-            </div>
-          </section>
-
+            </tbody>
+          </table>
         </div>
       </main>
 
-      {/* Modal de Ficha de Treino */}
-      {isPlanModalOpen && (
+      {/* Modal de Ficha */}
+      {isModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, overflowY: 'auto', padding: '2rem' }}>
           <div style={{ background: '#1e1e2f', padding: '2rem', borderRadius: '12px', width: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 style={{ marginBottom: '1.5rem', color: '#00f2fe' }}>Montar Ficha Periodizada</h3>
+            <h3 style={{ marginBottom: '1.5rem', color: '#00f2fe' }}>
+              {editingPlanId ? "Editar Modelo" : "Novo Modelo"}
+            </h3>
             
             <form onSubmit={handleSavePlan}>
-              <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Nome da Ficha (Ex: Hipertrofia A/B/C)</label>
-                  <input 
-                    type="text" 
-                    value={planName}
-                    onChange={e => setPlanName(e.target.value)}
-                    required
-                    style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', background: '#0f0f1a', color: '#fff' }}
-                  />
-                </div>
-                {templates.length > 0 && !editingPlanId && (
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', color: '#10b981' }}>Importar de um Modelo</label>
-                    <select 
-                      onChange={handleImportTemplate}
-                      defaultValue=""
-                      style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #10b981', background: '#0f0f1a', color: '#fff' }}
-                    >
-                      <option value="" disabled>Selecione um modelo...</option>
-                      {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-                  </div>
-                )}
+              <div style={{ marginBottom: '2rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Nome do Modelo (Ex: Hipertrofia A/B/C)</label>
+                <input 
+                  type="text" 
+                  value={planName}
+                  onChange={e => setPlanName(e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', background: '#0f0f1a', color: '#fff' }}
+                />
               </div>
 
-              {/* Abas das Rotinas (Treino A, Treino B...) */}
               <div style={{ display: 'flex', borderBottom: '1px solid #334155', marginBottom: '1rem', overflowX: 'auto' }}>
                 {planRoutines.map((routine, idx) => (
                   <div 
@@ -354,7 +230,6 @@ export default function StudentDetailClient({ student, exercises: initialExercis
                 </button>
               </div>
               
-              {/* Conteúdo da Rotina Ativa */}
               <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', minHeight: '200px' }}>
                 <h4 style={{ marginBottom: '1rem', color: '#cbd5e1' }}>Exercícios do {planRoutines[activeRoutineTab].name}</h4>
                 
@@ -455,18 +330,17 @@ export default function StudentDetailClient({ student, exercises: initialExercis
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                <button type="button" onClick={() => setIsPlanModalOpen(false)} style={{ flex: 1, padding: '0.8rem', background: 'transparent', border: '1px solid #334155', color: '#fff', borderRadius: '8px', cursor: 'pointer' }}>
+                <button type="button" onClick={() => setIsModalOpen(false)} style={{ flex: 1, padding: '0.8rem', background: 'transparent', border: '1px solid #334155', color: '#fff', borderRadius: '8px', cursor: 'pointer' }}>
                   Cancelar
                 </button>
-                <button type="submit" disabled={isSubmittingPlan} style={{ flex: 1, padding: '0.8rem', background: '#00f2fe', border: 'none', color: '#0f0f1a', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', opacity: isSubmittingPlan ? 0.7 : 1 }}>
-                  {isSubmittingPlan ? "Salvando..." : "Finalizar Ficha (Todos os Treinos)"}
+                <button type="submit" disabled={isSubmitting} style={{ flex: 1, padding: '0.8rem', background: '#00f2fe', border: 'none', color: '#0f0f1a', fontWeight: 'bold', borderRadius: '8px', cursor: 'pointer', opacity: isSubmitting ? 0.7 : 1 }}>
+                  {isSubmitting ? "Salvando..." : "Finalizar Modelo"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
     </div>
   );
 }

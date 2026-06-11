@@ -92,11 +92,16 @@ export default function ManagerClient({ gymName, trainers, students }: { gymName
           </button>
         </div>
 
-        <div className={styles.actionsBar}>
+        <div className={styles.actionsBar} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3>{activeTab === "TRAINERS" ? "Personais da Unidade" : "Alunos Matriculados"}</h3>
-          <button className={styles.addBtn} onClick={openAddModal}>
-            + Adicionar {activeTab === "TRAINERS" ? "Personal" : "Aluno"}
-          </button>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button className={styles.actionBtn} style={{ background: '#3b82f6', border: 'none', color: '#fff', padding: '0.6rem 1rem', borderRadius: '8px', cursor: 'pointer' }} onClick={() => router.push('/trainer/templates')}>
+              Modelos de Ficha da Academia
+            </button>
+            <button className={styles.addBtn} onClick={openAddModal}>
+              + Adicionar {activeTab === "TRAINERS" ? "Personal" : "Aluno"}
+            </button>
+          </div>
         </div>
 
         <div className={styles.tableContainer}>

@@ -17,7 +17,18 @@ export default async function StudentDetails({ params }: { params: Promise<{ id:
       },
       studentPlans: {
         orderBy: { createdAt: 'desc' },
-        take: 1
+        take: 1,
+        include: {
+          routines: {
+            orderBy: { orderIndex: 'asc' },
+            include: {
+              exercises: {
+                orderBy: { orderIndex: 'asc' },
+                include: { exercise: true }
+              }
+            }
+          }
+        }
       }
     }
   });
@@ -31,12 +42,35 @@ export default async function StudentDetails({ params }: { params: Promise<{ id:
     orderBy: { name: 'asc' }
   });
 
+  // Actually we need the logged in user's ID
+  const userId = cookieStore.get("userId")?.value;
+  
+  // Pegar os IDs dos gestores da academia para exibir os modelos deles também
+  const gymAdmins = await prisma.user.findMany({
+    where: { gymId, role: "GYM_ADMIN" },
+    select: { id: true }
+  });
+  const adminIds = gymAdmins.map(a => a.id);
+  const allowedTrainerIds = userId ? [userId, ...adminIds] : adminIds;
+
+  const trainerTemplates = await prisma.workoutPlan.findMany({
+    where: { trainerId: { in: allowedTrainerIds }, studentId: null },
+    include: {
+      routines: {
+        orderBy: { orderIndex: 'asc' },
+        include: {
+          exercises: { orderBy: { orderIndex: 'asc' } }
+        }
+      }
+    }
+  });
+
   const studentData = {
     id: rawStudent.id,
     name: rawStudent.name,
     email: rawStudent.email,
     shortId: rawStudent.shortId,
-    currentPlan: rawStudent.studentPlans.length > 0 ? rawStudent.studentPlans[0].name : null,
+    currentPlan: rawStudent.studentPlans.length > 0 ? rawStudent.studentPlans[0] : null,
     measurements: rawStudent.measurements.map(m => ({
       id: m.id,
       date: m.createdAt,
@@ -46,5 +80,5 @@ export default async function StudentDetails({ params }: { params: Promise<{ id:
     }))
   };
 
-  return <StudentDetailClient student={studentData} exercises={exercises} />;
+  return <StudentDetailClient student={studentData} exercises={exercises} templates={trainerTemplates} />;
 }

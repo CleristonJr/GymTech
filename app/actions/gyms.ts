@@ -3,9 +3,16 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
+import { getSession } from "@/lib/session";
+
+async function isSuperAdmin() {
+  const session = await getSession();
+  return session?.role === "SUPER_ADMIN";
+}
 
 export async function createGym(name: string, managerEmail?: string, managerPassword?: string) {
   try {
+    if (!(await isSuperAdmin())) return { error: "Acesso negado." };
     if (!name) return { error: "Nome da academia é obrigatório." };
 
     if (managerEmail && managerPassword) {
@@ -43,6 +50,7 @@ export async function createGym(name: string, managerEmail?: string, managerPass
 
 export async function updateGym(id: string, name: string) {
   try {
+    if (!(await isSuperAdmin())) return { error: "Acesso negado." };
     await prisma.gym.update({
       where: { id },
       data: { name },
@@ -58,6 +66,7 @@ export async function updateGym(id: string, name: string) {
 
 export async function toggleGymStatus(id: string, currentStatus: string) {
   try {
+    if (!(await isSuperAdmin())) return { error: "Acesso negado." };
     const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
     
     await prisma.gym.update({
@@ -75,6 +84,7 @@ export async function toggleGymStatus(id: string, currentStatus: string) {
 
 export async function deleteGym(id: string) {
   try {
+    if (!(await isSuperAdmin())) return { error: "Acesso negado." };
     // Exclui usuários atrelados primeiro ou usa onDelete Cascade no schema.
     // Como não temos Cascade, deletamos manualmente os usuários vinculados (ou impede a deleção).
     // Simplificação: Deletar usuários vinculados à academia.

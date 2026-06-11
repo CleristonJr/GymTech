@@ -3,13 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { getSession } from "@/lib/session";
 
 export async function finishWorkoutSession(routineId: string) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-
-    if (!userId) return { error: "Usuário não autenticado." };
+    const session = await getSession();
+    if (!session || session.role !== "STUDENT") return { error: "Usuário não autenticado." };
+    const userId = session.userId;
 
     // Registra a sessão de treino no banco
     await prisma.workoutSession.create({

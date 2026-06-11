@@ -97,9 +97,9 @@ model WorkoutPlan {
   id        String   @id @default(cuid())
   name      String
   trainerId String
-  studentId String
+  studentId String?
   trainer   User     @relation("TrainerPlans", fields: [trainerId], references: [id])
-  student   User     @relation("StudentPlans", fields: [studentId], references: [id])
+  student   User?    @relation("StudentPlans", fields: [studentId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -122,8 +122,10 @@ model WorkoutExercise {
   routineId     String
   exerciseId    String
   sets          Int
-  reps          Int
+  reps          Int?
+  duration      String?
   restTimeSecs  Int         @default(60)
+  observation   String?
   orderIndex    Int         @default(0)
   routine       Routine     @relation(fields: [routineId], references: [id], onDelete: Cascade)
   exercise      Exercise    @relation(fields: [exerciseId], references: [id])

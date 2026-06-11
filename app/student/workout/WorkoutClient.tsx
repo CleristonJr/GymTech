@@ -8,7 +8,10 @@ import { finishWorkoutSession } from "@/app/actions/student";
 type ExerciseDetail = {
   name: string;
   sets: number;
-  reps: number;
+  reps: number | null;
+  duration: string | null;
+  restTimeSecs: number;
+  observation: string | null;
 };
 
 export default function WorkoutClient({ routineId, routineName, exercises, currentStreak, currentCrystals }: { routineId: string, routineName: string, exercises: ExerciseDetail[], currentStreak: number, currentCrystals: number }) {
@@ -34,7 +37,7 @@ export default function WorkoutClient({ routineId, routineName, exercises, curre
   }
 
   const currentExercise = exercises[currentIndex];
-  const restTime = 60; // Fixo para o MVP, poderia vir do DB
+  const restTime = currentExercise.restTimeSecs || 60; 
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -156,11 +159,25 @@ export default function WorkoutClient({ routineId, routineName, exercises, curre
                   <span>Série Atual</span>
                   <strong style={{ color: '#00f2fe' }}>{currentSet} / {currentExercise.sets}</strong>
                 </div>
-                <div className={styles.metricBox}>
-                  <span>Repetições</span>
-                  <strong>{currentExercise.reps}</strong>
-                </div>
+                {currentExercise.reps && (
+                  <div className={styles.metricBox}>
+                    <span>Repetições</span>
+                    <strong>{currentExercise.reps}</strong>
+                  </div>
+                )}
+                {currentExercise.duration && (
+                  <div className={styles.metricBox}>
+                    <span>Tempo</span>
+                    <strong>{currentExercise.duration}</strong>
+                  </div>
+                )}
               </div>
+              
+              {currentExercise.observation && (
+                <div style={{ marginTop: '1rem', padding: '0.8rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', fontSize: '0.9rem', color: '#cbd5e1' }}>
+                  <strong>Obs:</strong> {currentExercise.observation}
+                </div>
+              )}
 
               <div className={styles.actions}>
                 <button className={styles.primaryBtn} onClick={handleFinishSet}>

@@ -3,13 +3,13 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { getSession } from "@/lib/session";
 
 export async function createGroup(name: string) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-
-    if (!userId) return { error: "Usuário não autenticado." };
+    const session = await getSession();
+    if (!session || session.role !== "STUDENT") return { error: "Usuário não autenticado." };
+    const userId = session.userId;
 
     const inviteCode = `G-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
@@ -40,10 +40,9 @@ export async function createGroup(name: string) {
 
 export async function joinGroup(inviteCode: string) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-
-    if (!userId) return { error: "Usuário não autenticado." };
+    const session = await getSession();
+    if (!session || session.role !== "STUDENT") return { error: "Usuário não autenticado." };
+    const userId = session.userId;
 
     const group = await prisma.group.findUnique({
       where: { inviteCode }
@@ -79,10 +78,9 @@ export async function joinGroup(inviteCode: string) {
 
 export async function leaveGroup(groupId: string) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("userId")?.value;
-
-    if (!userId) return { error: "Usuário não autenticado." };
+    const session = await getSession();
+    if (!session || session.role !== "STUDENT") return { error: "Usuário não autenticado." };
+    const userId = session.userId;
 
     await prisma.groupMember.delete({
       where: {

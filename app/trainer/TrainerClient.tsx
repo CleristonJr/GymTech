@@ -38,8 +38,15 @@ export default function TrainerClient({ students }: { students: StudentData[] })
       </header>
 
       <main className={styles.main}>
-        <div className={styles.actionsBar}>
+        <div className={styles.actionsBar} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h3>Alunos da Academia</h3>
+          <button 
+            className={styles.actionBtn} 
+            style={{ background: '#3b82f6', border: 'none', color: '#fff' }}
+            onClick={() => router.push('/trainer/templates')}
+          >
+            Meus Modelos de Ficha
+          </button>
         </div>
 
         <div className={styles.tableContainer}>

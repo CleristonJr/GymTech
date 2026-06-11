@@ -1,16 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
+import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import ManagerClient from "./ManagerClient";
 
 export default async function GymManagerDashboard() {
-  const cookieStore = await cookies();
-  const gymId = cookieStore.get("gymId")?.value;
-  const role = cookieStore.get("userRole")?.value;
-
-  if (!gymId || role !== "GYM_ADMIN") {
+  const session = await getSession();
+  if (!session || !session.gymId || session.role !== "GYM_ADMIN") {
     redirect("/login");
   }
+  const gymId = session.gymId;
 
   // Busca o nome da academia
   const gym = await prisma.gym.findUnique({

@@ -3,14 +3,14 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import StudentDashboardClient from "./StudentDashboardClient";
 
-export default async function StudentDashboard() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
-  const role = cookieStore.get("userRole")?.value;
+import { getSession } from "@/lib/session";
 
-  if (!userId || role !== "STUDENT") {
+export default async function StudentDashboard() {
+  const session = await getSession();
+  if (!session || session.role !== "STUDENT") {
     redirect("/login");
   }
+  const userId = session.userId;
 
   const rawStudent = await prisma.user.findUnique({
     where: { id: userId },
