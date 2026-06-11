@@ -2,15 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import TemplatesClient from "./TemplatesClient";
+import { getSession } from "@/lib/session";
 
 export default async function TemplatesPage() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
-  const role = cookieStore.get("userRole")?.value;
-
-  if (!userId || (role !== "TRAINER" && role !== "GYM_ADMIN")) {
+  const session = await getSession();
+  if (!session || (session.role !== "TRAINER" && session.role !== "GYM_ADMIN")) {
     redirect("/login");
   }
+  const userId = session.userId;
 
   const templates = await prisma.workoutPlan.findMany({
     where: {

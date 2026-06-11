@@ -2,10 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import WorkoutClient from "./WorkoutClient";
+import { getSession } from "@/lib/session";
 
 export default async function WorkoutExecution({ searchParams }: { searchParams: Promise<{ routineId?: string }> }) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("userId")?.value;
+  const session = await getSession();
+  const userId = session?.userId;
   const { routineId } = await searchParams;
 
   if (!userId || !routineId) {

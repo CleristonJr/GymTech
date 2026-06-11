@@ -2,12 +2,13 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import StudentDetailClient from "./StudentDetailClient";
+import { getSession } from "@/lib/session";
 
 export default async function StudentDetails({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const gymId = cookieStore.get("gymId")?.value;
-  const role = cookieStore.get("userRole")?.value;
+  const session = await getSession();
+  const gymId = session?.gymId;
+  const role = session?.role;
 
   const rawStudent = await prisma.user.findUnique({
     where: { id },
@@ -43,8 +44,7 @@ export default async function StudentDetails({ params }: { params: Promise<{ id:
   });
 
   // Actually we need the logged in user's ID
-  const userId = cookieStore.get("userId")?.value;
-  
+  const userId = session?.userId;
   // Pegar os IDs dos gestores da academia para exibir os modelos deles também
   const gymAdmins = await prisma.user.findMany({
     where: { gymId, role: "GYM_ADMIN" },
